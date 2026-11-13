@@ -35,14 +35,39 @@
 *{box-sizing:border-box}
 html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:16px;line-height:1.45}
-.app{max-width:1120px;margin:0 auto;padding:20px 16px 110px;display:grid;gap:24px;grid-template-columns:1fr}
-@media (min-width:900px){
-  .app{grid-template-columns:minmax(0,1fr) 420px;align-items:start;padding-bottom:40px}
-  .stage{position:sticky;top:20px}
-}
+.app{max-width:1120px;margin:0 auto;padding:20px 16px 110px;display:grid;gap:18px;grid-template-columns:1fr}
 .stage{display:flex;flex-direction:column;align-items:center;gap:8px}
-.canvas-wrap{width:100%;max-width:460px;border-radius:14px;overflow:hidden;box-shadow:0 1px 0 var(--line),0 18px 40px -18px rgba(0,0,0,.35);background:#000}
-canvas{display:block;width:100%;height:auto}
+.canvas-wrap{--ar:0.8;width:100%;max-width:460px;border-radius:14px;overflow:hidden;box-shadow:0 1px 0 var(--line),0 18px 40px -18px rgba(0,0,0,.35);background:#000}
+canvas{display:block;width:100%;height:auto;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:grab}
+canvas.on-text{cursor:move}
+canvas.dragging{cursor:grabbing}
+.hintrow{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;max-width:460px}
+.mini{font:inherit;font-size:13px;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer;min-height:32px}
+.tabs{display:none}
+@media (min-width:900px){
+  .app{grid-template-columns:minmax(0,1fr) 420px;grid-template-areas:"stage head" "stage panel";align-items:start;padding-bottom:40px;column-gap:28px}
+  .head{grid-area:head}
+  .stage{grid-area:stage;position:sticky;top:20px;align-self:start}
+  .panel{grid-area:panel}
+}
+@media (max-width:899px){
+  .app{padding:10px 12px 92px;gap:12px}
+  .head h1{font-size:19px;margin:0}
+  .head p{display:none}
+  .stage{position:sticky;top:0;z-index:4;background:var(--bg);margin:0 -12px;padding:6px 12px 8px;box-shadow:0 10px 14px -14px rgba(0,0,0,.45)}
+  .canvas-wrap{width:min(100%, calc(44vh * var(--ar)));width:min(100%, calc(44svh * var(--ar)));border-radius:10px;transition:width .2s ease}
+  body.typing .canvas-wrap{width:min(100%, calc(26vh * var(--ar)));width:min(100%, calc(26svh * var(--ar)))}
+  .hint{font-size:12px}
+  .tabs{display:flex;gap:4px;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px}
+  .tabs button{flex:1;font:inherit;font-size:15px;font-weight:700;min-height:42px;border:0;border-radius:9px;background:transparent;color:var(--muted);cursor:pointer}
+  .tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+  .panel [data-tab]:not(.on){display:none}
+  .seg button{min-height:44px;padding:8px 16px}
+  .chips button{min-height:44px;font-size:15px}
+  .btn{min-height:44px}
+  .sliders{row-gap:14px}
+  .sliders input{height:28px}
+}
 .hint{margin:0;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 .panel{display:flex;flex-direction:column;gap:18px}
 .head h1{font-family:var(--f-display);font-weight:800;font-size:26px;line-height:1.2;margin:0 0 4px;text-wrap:balance}
@@ -74,7 +99,11 @@ details.group[open] summary{margin-bottom:6px}
 .savebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 #status{font-size:14px;color:var(--muted)}
 @media (max-width:899px){
-  .savebar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));justify-content:space-between}
+  .savebar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));gap:8px}
+  .savebar .btn{flex:1;justify-content:center}
+  #status{position:absolute;left:12px;right:12px;top:-26px;text-align:center;font-size:13px;pointer-events:none}
+  #status:empty{display:none}
+  #status:not(:empty){background:var(--ink);color:var(--bg);border-radius:8px;padding:2px 8px;width:max-content;max-width:calc(100% - 24px);margin:0 auto}
 }
 .colorf{flex-direction:row;align-items:center;gap:8px}
 .colorf input{width:44px;height:36px;border:1px solid var(--line);border-radius:8px;padding:2px;background:var(--bg)}
@@ -86,56 +115,67 @@ details.group[open] summary{margin-bottom:6px}
 </head>
 <body>
 <main class="app">
+  <header class="head">
+    <h1>Thought Post Studio</h1>
+    <p>One photo and one strong line, in each brand's own look. Exports at Instagram size.</p>
+  </header>
+
   <section class="stage" aria-label="Preview">
-    <div class="canvas-wrap"><canvas id="cv" width="1080" height="1350" aria-label="Post preview"></canvas></div>
-    <p class="hint" id="sizeHint">1080 × 1350 px · Instagram feed post</p>
+    <div class="canvas-wrap" id="wrap"><canvas id="cv" width="1080" height="1350" aria-label="Post preview. Drag to move the photo or the text, pinch to zoom the photo."></canvas></div>
+    <div class="hintrow">
+      <p class="hint">Drag photo or text · Pinch to zoom</p>
+      <button class="mini" id="resetPos" type="button">Reset</button>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Edit">
+      <button type="button" role="tab" data-tab="photo">Photo</button>
+      <button type="button" role="tab" data-tab="text">Text</button>
+      <button type="button" role="tab" data-tab="style">Style</button>
+      <button type="button" role="tab" data-tab="brand">Brand</button>
+    </nav>
   </section>
 
   <section class="panel">
-    <div class="head">
-      <h1>Thought Post Studio</h1>
-      <p>One photo and one strong line, in each brand's own look. Exports at Instagram size.</p>
-    </div>
-
-    <div class="group">
+    <div class="group" data-tab="brand">
       <span class="label" id="lbBrand">Brand</span>
       <div class="seg" id="brandSeg" role="group" aria-labelledby="lbBrand"></div>
     </div>
 
-    <div class="group">
+    <div class="group" data-tab="style">
       <span class="label" id="lbStyle">Style</span>
       <div class="seg" id="styleSeg" role="group" aria-labelledby="lbStyle"></div>
       <span class="label" id="lbSize" style="margin-top:6px">Size</span>
       <div class="seg" id="formatSeg" role="group" aria-labelledby="lbSize"></div>
+      <p class="small" id="sizeHint">1080 × 1350 px · Instagram feed post</p>
     </div>
 
-    <div class="group">
+    <div class="group" data-tab="photo">
       <span class="label">Photo</span>
       <div class="row">
         <label class="btn" for="photoIn" tabindex="0" id="photoBtn">Choose photo</label>
         <input type="file" id="photoIn" accept="image/*" hidden>
         <button class="btn ghost" id="photoClear" type="button" hidden>Remove photo</button>
       </div>
+      <p class="small">Move the photo with your finger on the preview, pinch to zoom. Sliders are for fine-tuning.</p>
       <div class="sliders">
-        <label for="zoomIn">Zoom</label><input type="range" id="zoomIn" min="100" max="250" value="100">
+        <label for="zoomIn">Zoom</label><input type="range" id="zoomIn" min="100" max="400" value="100">
         <label for="posXIn">Left / right</label><input type="range" id="posXIn" min="0" max="100" value="50">
         <label for="posYIn">Up / down</label><input type="range" id="posYIn" min="0" max="100" value="50">
       </div>
     </div>
 
-    <div class="group">
+    <div class="group" data-tab="text">
       <label class="label" for="lineIn">Thought line</label>
       <textarea id="lineIn" rows="3" spellcheck="false"></textarea>
       <p class="small">Enter starts a new line. Best under 12 words. Tap a line below to use it.</p>
       <div class="chips" id="bank"></div>
     </div>
 
-    <div class="group">
+    <div class="group" data-tab="text">
       <label class="label" for="chipIn">Tag on photo (optional)</label>
       <input type="text" id="chipIn" placeholder="e.g. रविवार स्पेशल">
     </div>
 
-    <details class="group" id="brandDetails">
+    <details class="group" id="brandDetails" data-tab="brand">
       <summary>Brand name, handle, footer and logo</summary>
       <label class="field" for="nameIn">Name on post<input type="text" id="nameIn"></label>
       <label class="field" for="handleIn">Instagram handle<input type="text" id="handleIn"></label>
@@ -156,7 +196,7 @@ details.group[open] summary{margin-bottom:6px}
 
     <div class="savebar">
       <button class="btn primary" id="saveBtn" type="button">Download PNG</button>
-      <button class="btn" id="shareBtn" type="button" hidden>Share / Save to gallery</button>
+      <button class="btn" id="shareBtn" type="button" hidden>Share / Save</button>
       <span id="status" role="status"></span>
     </div>
 
@@ -268,6 +308,7 @@ var state = {
   style: store.style || "glass",
   format: store.format || "post",
   photo: null, zoom: 1, posX: 50, posY: 50,
+  ox: 0, oy: 0, guide: false, dragging: false, tab: "photo",
   chip: "",
   text: {}, data: {}
 };
@@ -307,7 +348,23 @@ function drawCover(c, src, x, y, w, h, useState){
   var iw = src.naturalWidth || src.width, ih = src.naturalHeight || src.height;
   var z = useState ? state.zoom : 1, px = useState ? state.posX : 50, py = useState ? state.posY : 50;
   var s = Math.max(w/iw, h/ih) * z, dw = iw*s, dh = ih*s;
+  if (useState) lastCover = {spanX: w - dw, spanY: h - dh};
   c.drawImage(src, x + (w-dw)*(px/100), y + (h-dh)*(py/100), dw, dh);
+}
+
+/* Movable overlay: each layout passes the box it wants to move; we clamp the offset so it stays on the post */
+var hitBase = null, lastCover = null;
+function beginMove(c, box, H){
+  state.ox = Math.min(Math.max(state.ox, -box.x), W - box.x - box.w);
+  state.oy = Math.min(Math.max(state.oy, -box.y), H - box.y - box.h);
+  hitBase = box; c.save(); c.translate(state.ox, state.oy);
+}
+function endMove(c){
+  c.restore();
+  if (state.guide && hitBase){
+    c.save(); c.setLineDash([14, 10]); c.lineWidth = 4; c.strokeStyle = "rgba(255,255,255,0.9)";
+    rr(c, hitBase.x + state.ox - 10, hitBase.y + state.oy - 10, hitBase.w + 20, hitBase.h + 20, 18); c.stroke(); c.restore();
+  }
 }
 
 var phCache = {};
@@ -397,6 +454,7 @@ function iconSave(c, x, y, s, col){ // bookmark
   c.beginPath(); c.moveTo(x + s*0.15, y); c.lineTo(x + s*0.85, y); c.lineTo(x + s*0.85, y + s); c.lineTo(x + s*0.5, y + s*0.72); c.lineTo(x + s*0.15, y + s); c.closePath(); c.stroke(); c.restore();
 }
 
+function blurOK(){ return FILTER_OK && !state.dragging; }
 function safe(H){ return state.format === "story" ? {top:230, bottom:360} : {top:64, bottom:H === 1080 ? 64 : 84}; }
 function photoSrc(H){ return state.photo || placeholder(resolve(state.brand), H); }
 
@@ -413,12 +471,13 @@ var LAYOUTS = {
     var qh = blockH(q.lines.length, q.size, q.lh);
     var cardH = pad + 96 + 34 + qh + 38 + 2 + 30 + 34 + pad - 14;
     var y = Math.max(sf.top + 90, H - sf.bottom - 40 - cardH);
+    beginMove(c, {x:x, y:y, w:w, h:cardH}, H);
 
     c.save(); c.shadowColor = "rgba(0,0,0,0.35)"; c.shadowBlur = 60; c.shadowOffsetY = 24;
-    rr(c, x, y, w, cardH, 44); c.fillStyle = hexA(b.paper, FILTER_OK ? 0.6 : 0.94); c.fill(); c.restore();
-    if (FILTER_OK){
+    rr(c, x, y, w, cardH, 44); c.fillStyle = hexA(b.paper, blurOK() ? 0.6 : 0.94); c.fill(); c.restore();
+    if (blurOK()){
       c.save(); rr(c, x, y, w, cardH, 44); c.clip(); c.filter = "blur(26px) saturate(1.25)";
-      drawCover(c, src, 0, 0, W, H, true); c.filter = "none";
+      drawCover(c, src, -state.ox, -state.oy, W, H, true); c.filter = "none";
       c.fillStyle = hexA(b.paper, 0.8); c.fillRect(x, y, w, cardH); c.restore();
     }
     rr(c, x + 1, y + 1, w - 2, cardH - 2, 43); c.strokeStyle = "rgba(255,255,255,0.7)"; c.lineWidth = 2; c.stroke();
@@ -441,6 +500,7 @@ var LAYOUTS = {
     c.fillText(ft, cx, fy);
     iconSave(c, x + w - pad - 30, fy - 16, 30, b.mutedInk);
     iconShare(c, x + w - pad - 92, fy - 16, 32, b.mutedInk);
+    endMove(c);
 
     drawChip(c, state.chip, 64, sf.top, "left", b.paper, b.ink);
   },
@@ -458,18 +518,18 @@ var LAYOUTS = {
     c.fillStyle = "#fff"; c.font = font("700", 32, "'Mukta'"); c.textBaseline = "middle"; c.fillText(d.name, x + 84, sf.top + 36);
     drawChip(c, state.chip, W - 80, sf.top + 3, "right", "rgba(255,255,255,0.92)", b.ink);
 
-    var yB = H - sf.bottom;
+    var yB = H - sf.bottom, ruleY = yB - 44 - 30 - 40;
+    var q = fit(c, text, b.qFont, b.qWeight, inner, H*0.34, 88, 46, 1.42);
+    var qh = blockH(q.lines.length, q.size, q.lh), qTop = ruleY - 44 - qh;
+    beginMove(c, {x:x - 10, y:qTop - 100, w:inner + 20, h:yB + 14 - (qTop - 100)}, H);
     c.textBaseline = "alphabetic";
     c.font = font("500", 26, "'Mukta'"); c.fillStyle = "rgba(255,255,255,0.72)"; c.fillText(d.footer, x, yB);
     c.font = font("700", 30, "'Mukta'"); c.fillStyle = "#fff"; c.fillText(d.handle, x, yB - 44);
-    var ruleY = yB - 44 - 30 - 40;
     c.fillStyle = accentFill(c, b, x, ruleY, 140, 8); rr(c, x, ruleY, 140, 8, 4); c.fill();
-
-    var q = fit(c, text, b.qFont, b.qWeight, inner, H*0.34, 88, 46, 1.42);
-    var qh = blockH(q.lines.length, q.size, q.lh), qTop = ruleY - 44 - qh;
     drawBlock(c, q, b.qFont, b.qWeight, x, qTop, "#fff");
     c.font = font("400", 170, "'Tiro Devanagari Marathi'"); c.fillStyle = accentFill(c, b, x, qTop - 120, 90, 90);
     c.fillText("“", x - 8, qTop + 40);
+    endMove(c);
   },
 
   split: function(c, H, b, d, text){
@@ -492,8 +552,10 @@ var LAYOUTS = {
 
     var top = ph + 5 + 70 + 34, maxH = (yB - 44 - 32 - 40) - top;
     var q = fit(c, text, b.qFont, b.qWeight, inner, maxH, 74, 40, 1.44);
-    var qh = blockH(q.lines.length, q.size, q.lh);
-    drawBlock(c, q, b.qFont, b.qWeight, x, top + Math.max(0, (maxH - qh) * 0.35), b.paper);
+    var qh = blockH(q.lines.length, q.size, q.lh), qy = top + Math.max(0, (maxH - qh) * 0.35);
+    beginMove(c, {x:x, y:qy, w:inner, h:qh}, H);
+    drawBlock(c, q, b.qFont, b.qWeight, x, qy, b.paper);
+    endMove(c);
   },
 
   note: function(c, H, b, d, text){
@@ -509,6 +571,7 @@ var LAYOUTS = {
     var qh = blockH(q.lines.length, q.size, q.lh);
     var cardH = pad + 20 + qh + 44 + 40 + 40 + pad - 10;
     var cy = Math.max(sf.top + 110 + cardH/2, H - sf.bottom - 60 - cardH/2);
+    beginMove(c, {x:(W - w)/2 - 16, y:cy - cardH/2 - 44, w:w + 32, h:cardH + 70}, H);
     c.save(); c.translate(W/2, cy); c.rotate(-0.038);
     c.shadowColor = "rgba(0,0,0,0.4)"; c.shadowBlur = 50; c.shadowOffsetY = 22;
     rr(c, -w/2, -cardH/2, w, cardH, 10); c.fillStyle = b.paper; c.fill(); c.shadowColor = "transparent";
@@ -522,6 +585,7 @@ var LAYOUTS = {
     c.rotate(0.09); c.fillStyle = accentFill(c, b, -120, -cardH/2 - 26, 240, 56); c.globalAlpha = 0.85;
     c.fillRect(-120, -cardH/2 - 30, 240, 58); c.globalAlpha = 1;
     c.restore();
+    endMove(c);
   }
 };
 
@@ -544,7 +608,10 @@ function seg(el, items, key, onPick){
     if (it[2]){ var s = document.createElement("span"); s.className = "sw"; s.style.background = it[2]; bt.appendChild(s); }
     bt.appendChild(document.createTextNode(it[1]));
     bt.setAttribute("aria-pressed", String(state[key] === it[0]));
-    bt.addEventListener("click", function(){ state[key] = it[0]; onPick && onPick(); syncUI(); render(); save(); });
+    bt.addEventListener("click", function(){
+      if (state[key] !== it[0] && (key === "style" || key === "format")){ state.ox = 0; state.oy = 0; }
+      state[key] = it[0]; onPick && onPick(); syncUI(); render(); save();
+    });
     el.appendChild(bt);
   });
 }
@@ -553,6 +620,8 @@ function syncUI(){
   seg($("styleSeg"), STYLES, "style");
   seg($("formatSeg"), Object.keys(FORMATS).map(function(k){ return [k, FORMATS[k].label]; }), "format");
   $("sizeHint").textContent = FORMATS[state.format].hint;
+  $("wrap").style.setProperty("--ar", String(W / FORMATS[state.format].h));
+  setTab(state.tab);
   var d = state.data[state.brand];
   $("lineIn").value = state.text[state.brand];
   $("nameIn").value = d.name; $("handleIn").value = d.handle; $("footerIn").value = d.footer; $("monoIn").value = d.mono;
@@ -560,6 +629,7 @@ function syncUI(){
   $("colorRow").hidden = !isCustom;
   $("brandColorIn").value = d.brandColor; $("accentColorIn").value = d.accentColor;
   if (isCustom) $("brandDetails").open = true;
+  syncSliders();
   $("logoClear").hidden = !d.logo;
   var bank = $("bank"); bank.innerHTML = "";
   BRANDS[state.brand].lines.forEach(function(l){ bank.appendChild(lineChip(l)); });
@@ -578,6 +648,7 @@ $("chipIn").addEventListener("input", function(e){ state.chip = e.target.value.t
 [["brandColorIn","brandColor"],["accentColorIn","accentColor"]].forEach(function(p){
   $(p[0]).addEventListener("input", function(e){ state.data[state.brand][p[1]] = e.target.value; render(); save(); });
 });
+function syncSliders(){ $("zoomIn").value = Math.round(state.zoom*100); $("posXIn").value = Math.round(state.posX); $("posYIn").value = Math.round(state.posY); }
 $("zoomIn").addEventListener("input", function(e){ state.zoom = e.target.value/100; render(); });
 $("posXIn").addEventListener("input", function(e){ state.posX = +e.target.value; render(); });
 $("posYIn").addEventListener("input", function(e){ state.posY = +e.target.value; render(); });
@@ -590,7 +661,7 @@ function readImage(file, cb){
 }
 $("photoIn").addEventListener("change", function(e){
   var f = e.target.files && e.target.files[0]; if (!f) return;
-  readImage(f, function(im){ state.photo = im; state.zoom = 1; state.posX = 50; state.posY = 50; $("zoomIn").value = 100; $("posXIn").value = 50; $("posYIn").value = 50; $("photoClear").hidden = false; render(); });
+  readImage(f, function(im){ state.photo = im; state.zoom = 1; state.posX = 50; state.posY = 50; syncSliders(); $("photoClear").hidden = false; render(); });
   e.target.value = "";
 });
 $("photoClear").addEventListener("click", function(){ state.photo = null; $("photoClear").hidden = true; render(); });
@@ -610,12 +681,84 @@ $("resetBrand").addEventListener("click", function(){
   syncUI(); render(); save();
 });
 
+
+/* ---------- Tabs (phone layout) ---------- */
+function setTab(t){
+  state.tab = t;
+  Array.prototype.forEach.call(document.querySelectorAll(".tabs button"), function(b){ b.setAttribute("aria-selected", String(b.dataset.tab === t)); });
+  Array.prototype.forEach.call(document.querySelectorAll(".panel [data-tab]"), function(g){ g.classList.toggle("on", g.dataset.tab === t); });
+}
+Array.prototype.forEach.call(document.querySelectorAll(".tabs button"), function(b){
+  b.addEventListener("click", function(){ setTab(b.dataset.tab); });
+});
+// shrink the preview while the keyboard is open, so fields stay visible
+document.addEventListener("focusin", function(e){ if (e.target.matches("textarea, input[type=text]")) document.body.classList.add("typing"); });
+document.addEventListener("focusout", function(){ setTimeout(function(){ if (!document.activeElement || !document.activeElement.matches("textarea, input[type=text]")) document.body.classList.remove("typing"); }, 50); });
+
+/* ---------- Finger / mouse control on the preview ---------- */
+var raf = 0;
+function schedule(){ if (!raf) raf = requestAnimationFrame(function(){ raf = 0; render(); }); }
+var pts = {}, gesture = null;
+function toCanvas(e){ var r = cv.getBoundingClientRect(), k = W / r.width; return {x:(e.clientX - r.left)*k, y:(e.clientY - r.top)*k}; }
+function onText(p){ var h = hitBase; return h && p.x >= h.x + state.ox - 24 && p.x <= h.x + state.ox + h.w + 24 && p.y >= h.y + state.oy - 24 && p.y <= h.y + state.oy + h.h + 24; }
+function count(){ return Object.keys(pts).length; }
+function startGesture(){
+  var ids = Object.keys(pts);
+  if (ids.length >= 2){
+    var a = pts[ids[0]], b = pts[ids[1]];
+    gesture = {mode:"pinch", d0:Math.hypot(a.x-b.x, a.y-b.y) || 1, z0:state.zoom};
+  } else if (ids.length === 1){
+    var p = pts[ids[0]];
+    gesture = onText(p) ? {mode:"text", sx:p.x, sy:p.y, ox:state.ox, oy:state.oy}
+                        : {mode:"photo", sx:p.x, sy:p.y, px:state.posX, py:state.posY};
+  } else gesture = null;
+  state.guide = !!gesture && gesture.mode === "text";
+}
+cv.addEventListener("pointerdown", function(e){
+  cv.setPointerCapture(e.pointerId);
+  pts[e.pointerId] = toCanvas(e); state.dragging = true; cv.classList.add("dragging");
+  startGesture(); schedule();
+});
+cv.addEventListener("pointermove", function(e){
+  var p = toCanvas(e);
+  if (!pts[e.pointerId]){ cv.classList.toggle("on-text", onText(p)); return; }
+  pts[e.pointerId] = p;
+  if (!gesture) return;
+  if (gesture.mode === "pinch"){
+    var ids = Object.keys(pts), a = pts[ids[0]], b = pts[ids[1]];
+    state.zoom = Math.min(4, Math.max(1, gesture.z0 * (Math.hypot(a.x-b.x, a.y-b.y) / gesture.d0)));
+  } else if (gesture.mode === "text"){
+    state.ox = gesture.ox + (p.x - gesture.sx); state.oy = gesture.oy + (p.y - gesture.sy);
+  } else if (lastCover){
+    if (lastCover.spanX < -1) state.posX = Math.min(100, Math.max(0, gesture.px + (p.x - gesture.sx) * 100 / lastCover.spanX));
+    if (lastCover.spanY < -1) state.posY = Math.min(100, Math.max(0, gesture.py + (p.y - gesture.sy) * 100 / lastCover.spanY));
+  }
+  schedule();
+});
+function endPointer(e){
+  if (!pts[e.pointerId]) return;
+  delete pts[e.pointerId];
+  if (count()) { startGesture(); return; }
+  gesture = null; state.dragging = false; state.guide = false; cv.classList.remove("dragging");
+  syncSliders(); render();
+}
+cv.addEventListener("pointerup", endPointer);
+cv.addEventListener("pointercancel", endPointer);
+cv.addEventListener("pointerleave", function(e){ if (e.pointerType === "mouse" && !pts[e.pointerId]) cv.classList.remove("on-text"); });
+cv.addEventListener("wheel", function(e){
+  if (!e.ctrlKey && !e.altKey) return; // plain scroll keeps scrolling the page; Ctrl/trackpad-pinch zooms
+  e.preventDefault(); state.zoom = Math.min(4, Math.max(1, state.zoom * (e.deltaY < 0 ? 1.06 : 0.94))); syncSliders(); schedule();
+}, {passive:false});
+cv.addEventListener("dblclick", resetPos);
+function resetPos(){ state.ox = 0; state.oy = 0; state.zoom = 1; state.posX = 50; state.posY = 50; syncSliders(); render(); }
+$("resetPos").addEventListener("click", resetPos);
+
 function status(t){ $("status").textContent = t; }
 
 /* ---------- Download & share ---------- */
 function stamp(){ var n = new Date(); function p(v){ return String(v).padStart(2, "0"); } return n.getFullYear() + p(n.getMonth()+1) + p(n.getDate()) + "-" + p(n.getHours()) + p(n.getMinutes()); }
 function fileName(){ var slug = (state.data[state.brand].name || state.brand).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "post"; return slug + "-" + state.style + "-" + state.format + "-" + stamp() + ".png"; }
-function makeBlob(){ render(); return new Promise(function(res){ cv.toBlob(function(b){ res(b); }, "image/png"); }); }
+function makeBlob(){ state.guide = false; state.dragging = false; render(); return new Promise(function(res){ cv.toBlob(function(b){ res(b); }, "image/png"); }); }
 
 $("saveBtn").addEventListener("click", function(){
   status("Preparing…");
