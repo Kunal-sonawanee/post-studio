@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thought Post Studio · Kantex</title>
+<meta name="description" content="Make Instagram thought posts in seconds: add a photo, write one line in Marathi, Hindi or English, pick a style and download. Free tool by Kantex Technologies, Nashik.">
+<meta property="og:title" content="Thought Post Studio by Kantex">
+<meta property="og:description" content="Photo + one strong line = a ready Instagram post. Free, in your brand's colours.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#3B1FE0">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23C30AFD'/%3E%3Cstop offset='1' stop-color='%232917FD'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Crect x='12' y='30' width='40' height='22' rx='6' fill='%23fff'/%3E%3Crect x='18' y='37' width='22' height='3' rx='1.5' fill='%232917FD'/%3E%3Crect x='18' y='43' width='14' height='3' rx='1.5' fill='%23C30AFD'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Martel:wght@400;700;800&family=Mukta:wght@400;500;600;700;800&family=Tiro+Devanagari+Marathi&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* layout: live preview beside controls; stacks on phones with a sticky save bar */
+  --bg:#F3F2EF; --surface:#FFFFFF; --ink:#17161B; --muted:#6A6774; --line:#E2E0E5;
+  --accent:#3B1FE0; --accent-ink:#FFFFFF; --soft:#ECE9FB;
+  --f-ui:"Mukta", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-display:"Martel", Georgia, serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F0E13; --surface:#18171E; --ink:#F1F0F4; --muted:#9D9AA8; --line:#2B2934;
+    --accent:#7F6BFF; --accent-ink:#FFFFFF; --soft:#231F3A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F0E13; --surface:#18171E; --ink:#F1F0F4; --muted:#9D9AA8; --line:#2B2934;
+  --accent:#7F6BFF; --accent-ink:#FFFFFF; --soft:#231F3A; color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:16px;line-height:1.45}
+.app{max-width:1120px;margin:0 auto;padding:20px 16px 110px;display:grid;gap:24px;grid-template-columns:1fr}
+@media (min-width:900px){
+  .app{grid-template-columns:minmax(0,1fr) 420px;align-items:start;padding-bottom:40px}
+  .stage{position:sticky;top:20px}
+}
+.stage{display:flex;flex-direction:column;align-items:center;gap:8px}
+.canvas-wrap{width:100%;max-width:460px;border-radius:14px;overflow:hidden;box-shadow:0 1px 0 var(--line),0 18px 40px -18px rgba(0,0,0,.35);background:#000}
+canvas{display:block;width:100%;height:auto}
+.hint{margin:0;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.panel{display:flex;flex-direction:column;gap:18px}
+.head h1{font-family:var(--f-display);font-weight:800;font-size:26px;line-height:1.2;margin:0 0 4px;text-wrap:balance}
+.head p{margin:0;color:var(--muted);font-size:15px}
+.group{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.label{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:15px;font-weight:600;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{font:inherit;font-weight:600;font-size:15px;border-radius:10px;padding:9px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-size:16px;padding:12px 20px}
+.btn.soft{background:var(--soft);border-color:transparent;color:var(--ink)}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.55;cursor:progress}
+button:focus-visible,.btn:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+textarea,input[type="text"]{font:inherit;font-size:17px;width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);color:var(--ink)}
+textarea{resize:vertical;min-height:84px}
+.small{margin:0;font-size:13px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:inherit;font-size:14px;text-align:left;white-space:pre-line;line-height:1.3;border:1px dashed var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:7px 10px;cursor:pointer;max-width:100%}
+.chips button:hover{border-style:solid;border-color:var(--muted)}
+.sliders{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:center;font-size:14px;color:var(--muted)}
+.sliders input{width:100%;accent-color:var(--accent)}
+details.group summary{cursor:pointer;font-weight:700;font-size:15px}
+details.group[open] summary{margin-bottom:6px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+.savebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#status{font-size:14px;color:var(--muted)}
+@media (max-width:899px){
+  .savebar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));justify-content:space-between}
+}
+.colorf{flex-direction:row;align-items:center;gap:8px}
+.colorf input{width:44px;height:36px;border:1px solid var(--line);border-radius:8px;padding:2px;background:var(--bg)}
+.credit{margin:0;font-size:13px;color:var(--muted);text-align:center}
+.credit a{color:var(--ink);font-weight:700}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main class="app">
+  <section class="stage" aria-label="Preview">
+    <div class="canvas-wrap"><canvas id="cv" width="1080" height="1350" aria-label="Post preview"></canvas></div>
+    <p class="hint" id="sizeHint">1080 × 1350 px · Instagram feed post</p>
+  </section>
+
+  <section class="panel">
+    <div class="head">
+      <h1>Thought Post Studio</h1>
+      <p>One photo and one strong line, in each brand's own look. Exports at Instagram size.</p>
+    </div>
+
+    <div class="group">
+      <span class="label" id="lbBrand">Brand</span>
+      <div class="seg" id="brandSeg" role="group" aria-labelledby="lbBrand"></div>
+    </div>
+
+    <div class="group">
+      <span class="label" id="lbStyle">Style</span>
+      <div class="seg" id="styleSeg" role="group" aria-labelledby="lbStyle"></div>
+      <span class="label" id="lbSize" style="margin-top:6px">Size</span>
+      <div class="seg" id="formatSeg" role="group" aria-labelledby="lbSize"></div>
+    </div>
+
+    <div class="group">
+      <span class="label">Photo</span>
+      <div class="row">
+        <label class="btn" for="photoIn" tabindex="0" id="photoBtn">Choose photo</label>
+        <input type="file" id="photoIn" accept="image/*" hidden>
+        <button class="btn ghost" id="photoClear" type="button" hidden>Remove photo</button>
+      </div>
+      <div class="sliders">
+        <label for="zoomIn">Zoom</label><input type="range" id="zoomIn" min="100" max="250" value="100">
+        <label for="posXIn">Left / right</label><input type="range" id="posXIn" min="0" max="100" value="50">
+        <label for="posYIn">Up / down</label><input type="range" id="posYIn" min="0" max="100" value="50">
+      </div>
+    </div>
+
+    <div class="group">
+      <label class="label" for="lineIn">Thought line</label>
+      <textarea id="lineIn" rows="3" spellcheck="false"></textarea>
+      <p class="small">Enter starts a new line. Best under 12 words. Tap a line below to use it.</p>
+      <div class="chips" id="bank"></div>
+    </div>
+
+    <div class="group">
+      <label class="label" for="chipIn">Tag on photo (optional)</label>
+      <input type="text" id="chipIn" placeholder="e.g. रविवार स्पेशल">
+    </div>
+
+    <details class="group" id="brandDetails">
+      <summary>Brand name, handle, footer and logo</summary>
+      <label class="field" for="nameIn">Name on post<input type="text" id="nameIn"></label>
+      <label class="field" for="handleIn">Instagram handle<input type="text" id="handleIn"></label>
+      <label class="field" for="footerIn">Footer line<input type="text" id="footerIn"></label>
+      <label class="field" for="monoIn">Letter mark (shown when there's no logo)<input type="text" id="monoIn" maxlength="3"></label>
+      <div class="row" id="colorRow">
+        <label class="field colorf" for="brandColorIn">Main colour<input type="color" id="brandColorIn"></label>
+        <label class="field colorf" for="accentColorIn">Accent colour<input type="color" id="accentColorIn"></label>
+      </div>
+      <div class="row">
+        <label class="btn" for="logoIn" tabindex="0">Upload logo</label>
+        <input type="file" id="logoIn" accept="image/*" hidden>
+        <button class="btn ghost" id="logoClear" type="button" hidden>Use letter mark</button>
+        <button class="btn ghost" id="resetBrand" type="button">Reset brand details</button>
+      </div>
+      <p class="small">Saved in this browser for each brand. Square logos look best.</p>
+    </details>
+
+    <div class="savebar">
+      <button class="btn primary" id="saveBtn" type="button">Download PNG</button>
+      <button class="btn" id="shareBtn" type="button" hidden>Share / Save to gallery</button>
+      <span id="status" role="status"></span>
+    </div>
+
+    <p class="credit">Free tool by <a href="https://kantex.in" rel="noopener">Kantex Technologies</a>, Nashik. Photos never leave your phone: everything is made inside your browser.</p>
+  </section>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- Brand presets ---------- */
+var BRANDS = {
+  sadguru: {
+    tab: "Hotel New Sadguru", swatch: "#9E2A1E",
+    name: "Hotel New Sadguru", handle: "@hotel_new_sadguru",
+    footer: "Pure Veg · Maharashtrian · Trusted by generations",
+    mono: "स", dark: "#2B0D09", deep: "#3A120C", brand: "#9E2A1E", accent: "#E8A61C",
+    paper: "#FFF8EC", ink: "#2A1410", mutedInk: "#7A5A4C",
+    qFont: "'Tiro Devanagari Marathi'", qWeight: "400",
+    bokeh: ["#E8A61C", "#D4552A", "#FFD27A"],
+    lines: [
+      "रविवारची सकाळ\nगुळाचा चहा आणि गरम वडापाव.",
+      "पाऊस असो वा ऊन,\nवडापाव गरमच हवा.",
+      "पिढ्या बदलल्या,\nचव तीच राहिली.",
+      "मूग भजी गरम आहेत.\nतुम्ही कुठे आहात?",
+      "नाशिकची सकाळ\nसद्गुरूच्या चहाशिवाय अपूर्ण."
+    ],
+    context: "Hotel New Sadguru: a pure-veg Maharashtrian snack hotel in Nashik, a family legacy trusted by generations. Famous for pav vada (वडापाव), moong bhaji (मूग भजी) and jaggery tea (गुळाचा चहा). Tone: homely, nostalgic, Nashik pride, a little playful.",
+    lang: "Marathi in Devanagari script"
+  },
+  caterers: {
+    tab: "Pravin Caterers", swatch: "#1F4A30",
+    name: "Pravin Caterers & Events", handle: "@pravincaterers.info",
+    footer: "Pure Veg Catering & Events · +91 72619 46555",
+    mono: "प्र", dark: "#0E2116", deep: "#15301F", brand: "#1F4A30", accent: "#C9A961",
+    paper: "#FBF7EE", ink: "#14261A", mutedInk: "#5E6B5F",
+    qFont: "'Martel'", qWeight: "700",
+    bokeh: ["#C9A961", "#F3E6C4", "#8FB08F"],
+    lines: [
+      "पाहुणे तृप्त झाले,\nकी आमचं काम पूर्ण झालं.",
+      "लग्न तुमचं,\nजबाबदारी आमची.",
+      "पंगत बसली\nकी नाती जुळतात.",
+      "चव लक्षात राहते,\nआठवणी कायम राहतात.",
+      "अतिथी देवो भव,\nहीच आमची रेसिपी."
+    ],
+    context: "Pravin Caterers & Events: pure-veg catering and event management in Nashik for 20+ years. Weddings, family functions, corporate events, religious bhandaras. Tone: premium, warm, trustworthy, rooted in the Marathi tradition of hospitality (अतिथी देवो भव, पंगत).",
+    lang: "Marathi in Devanagari script"
+  },
+  kantex: {
+    tab: "Kantex", swatch: "#6A12FD",
+    name: "Kantex Technologies", handle: "@be.kantex",
+    footer: "kantex.in · Nashik",
+    mono: "K", dark: "#07070C", deep: "#0E0D18", brand: "#2917FD", accent: "#C30AFD",
+    grad: ["#C30AFD", "#2917FD"],
+    paper: "#FFFFFF", ink: "#0B0B12", mutedInk: "#5D5B6B",
+    qFont: "'Mukta'", qWeight: "700",
+    bokeh: ["#C30AFD", "#2917FD", "#7A5CFF"],
+    lines: [
+      "Business बढ़ाना है?\nपहले system ठीक करो.",
+      "ज़्यादा staff नहीं,\nबेहतर system चाहिए.",
+      "Customer WhatsApp पे है.\nआपका business कहाँ है?",
+      "Register वाला हिसाब\nGrowth नहीं दिखाता.",
+      "Technology बड़ों के लिए नहीं,\nसमझदारों के लिए है."
+    ],
+    context: "Kantex Technologies: a Nashik tech company that builds software, AI automation and digital systems for local businesses and service providers. Tone: sharp founder voice, simple business truths about systems, going digital and growing without chaos.",
+    lang: "Hinglish: Hindi in Devanagari mixed with common English words in Latin script"
+  },
+  custom: {
+    tab: "Your brand", swatch: "#E4572E", custom: true,
+    name: "Your Brand Name", handle: "@yourbrand",
+    footer: "yourwebsite.com · Your city",
+    mono: "Y", brand: "#E4572E", accent: "#F2C14E",
+    paper: "#FFFAF2", ink: "#17161B", mutedInk: "#6A6774",
+    qFont: "'Mukta'", qWeight: "700",
+    lines: [
+      "चांगली सुरुवात\nम्हणजे अर्धं यश.",
+      "आज जे पेरता,\nउद्या तेच उगवतं.",
+      "Quality का\nकोई shortcut नहीं होता.",
+      "Small business,\nbig heart.",
+      "Customers remember\nhow you made them feel."
+    ]
+  }
+};
+function mix(hex, to, t){
+  var a = parseInt(hex.slice(1), 16), b = parseInt(to.slice(1), 16);
+  function ch(s){ return Math.round(((a>>s)&255)*(1-t) + ((b>>s)&255)*t); }
+  return "#" + [16, 8, 0].map(function(s){ return ch(s).toString(16).padStart(2, "0"); }).join("");
+}
+function resolve(key){
+  var base = BRANDS[key], d = state.data[key], b = {};
+  Object.keys(base).forEach(function(k){ b[k] = base[k]; });
+  b.key = key; b.mono = (d.mono || base.mono).trim() || base.mono;
+  if (base.custom){
+    b.brand = d.brandColor || base.brand; b.accent = d.accentColor || base.accent;
+    b.dark = mix(b.brand, "#000000", 0.80); b.deep = mix(b.brand, "#000000", 0.66);
+    b.bokeh = [b.accent, b.brand, mix(b.accent, "#FFFFFF", 0.5)];
+  }
+  return b;
+}
+var STYLES = [["glass","Glass card"],["editorial","Editorial"],["split","Split"],["note","Paper note"]];
+var FORMATS = { post:{h:1350,label:"4:5 Post",hint:"1080 × 1350 px · Instagram feed post"}, square:{h:1080,label:"1:1 Square",hint:"1080 × 1080 px · square post"}, story:{h:1920,label:"9:16 Story",hint:"1080 × 1920 px · story or reel cover (text kept inside safe area)"} };
+var W = 1080;
+
+/* ---------- State ---------- */
+var store = load();
+var state = {
+  brand: store.brand || "sadguru",
+  style: store.style || "glass",
+  format: store.format || "post",
+  photo: null, zoom: 1, posX: 50, posY: 50,
+  chip: "",
+  text: {}, data: {}
+};
+Object.keys(BRANDS).forEach(function(k){
+  var saved = (store.data && store.data[k]) || {};
+  state.data[k] = { name: saved.name || BRANDS[k].name, handle: saved.handle || BRANDS[k].handle, footer: saved.footer || BRANDS[k].footer, mono: saved.mono || BRANDS[k].mono, brandColor: saved.brandColor || BRANDS[k].brand, accentColor: saved.accentColor || BRANDS[k].accent, logoUrl: saved.logoUrl || null, logo: null };
+  state.text[k] = (store.text && store.text[k]) || BRANDS[k].lines[0];
+  if (state.data[k].logoUrl){ var im = new Image(); im.onload = function(){ state.data[k].logo = im; render(); }; im.src = state.data[k].logoUrl; }
+});
+
+function load(){ try { return JSON.parse(localStorage.getItem("tps-v1") || "{}"); } catch(e){ return {}; } }
+function save(){
+  try {
+    var data = {}; Object.keys(state.data).forEach(function(k){ var d = state.data[k]; data[k] = {name:d.name, handle:d.handle, footer:d.footer, mono:d.mono, brandColor:d.brandColor, accentColor:d.accentColor, logoUrl:d.logoUrl}; });
+    localStorage.setItem("tps-v1", JSON.stringify({brand:state.brand, style:state.style, format:state.format, text:state.text, data:data}));
+  } catch(e){}
+}
+
+/* ---------- Canvas helpers ---------- */
+var cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+var FILTER_OK = (function(){ try { var c = document.createElement("canvas").getContext("2d"); c.filter = "blur(2px)"; return c.filter === "blur(2px)"; } catch(e){ return false; } })();
+
+function rr(c, x, y, w, h, r){
+  r = Math.min(r, w/2, h/2);
+  c.beginPath(); c.moveTo(x+r, y); c.lineTo(x+w-r, y); c.quadraticCurveTo(x+w, y, x+w, y+r);
+  c.lineTo(x+w, y+h-r); c.quadraticCurveTo(x+w, y+h, x+w-r, y+h); c.lineTo(x+r, y+h);
+  c.quadraticCurveTo(x, y+h, x, y+h-r); c.lineTo(x, y+r); c.quadraticCurveTo(x, y, x+r, y); c.closePath();
+}
+function font(w, s, fam){ return w + " " + s + "px " + fam + ", 'Mukta', system-ui, sans-serif"; }
+function accentFill(c, b, x, y, w, h){
+  if (b.grad){ var g = c.createLinearGradient(x, y, x+w, y+h); g.addColorStop(0, b.grad[0]); g.addColorStop(1, b.grad[1]); return g; }
+  return b.accent;
+}
+function hexA(hex, a){ var n = parseInt(hex.slice(1), 16); return "rgba(" + (n>>16&255) + "," + (n>>8&255) + "," + (n&255) + "," + a + ")"; }
+
+function drawCover(c, src, x, y, w, h, useState){
+  var iw = src.naturalWidth || src.width, ih = src.naturalHeight || src.height;
+  var z = useState ? state.zoom : 1, px = useState ? state.posX : 50, py = useState ? state.posY : 50;
+  var s = Math.max(w/iw, h/ih) * z, dw = iw*s, dh = ih*s;
+  c.drawImage(src, x + (w-dw)*(px/100), y + (h-dh)*(py/100), dw, dh);
+}
+
+var phCache = {};
+function placeholder(b, H){
+  var id = b.key + b.brand + b.accent + H; if (phCache[id]) return phCache[id];
+  var c = document.createElement("canvas"); c.width = W; c.height = H; var x = c.getContext("2d");
+  var g = x.createRadialGradient(W*0.5, H*0.62, 40, W*0.5, H*0.55, H*0.85);
+  g.addColorStop(0, b.deep); g.addColorStop(1, b.dark); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  var seed = 7; function rnd(){ seed = (seed*16807) % 2147483647; return seed/2147483647; }
+  for (var i = 0; i < 46; i++){
+    var r = 30 + rnd()*120, cx = rnd()*W, cy = rnd()*H*0.75, col = b.bokeh[i % b.bokeh.length];
+    var rg = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+    rg.addColorStop(0, hexA(col, 0.10 + rnd()*0.18)); rg.addColorStop(0.7, hexA(col, 0.06)); rg.addColorStop(1, hexA(col, 0));
+    x.fillStyle = rg; x.beginPath(); x.arc(cx, cy, r, 0, Math.PI*2); x.fill();
+  }
+  // soft plate glow in the lower half, like a dish on a table
+  var pg = x.createRadialGradient(W*0.5, H*0.8, 20, W*0.5, H*0.8, W*0.55);
+  pg.addColorStop(0, hexA(b.bokeh[1], 0.22)); pg.addColorStop(1, hexA(b.bokeh[1], 0));
+  x.fillStyle = pg; x.fillRect(0, 0, W, H);
+  phCache[id] = c; return c;
+}
+
+function wrap(c, text, maxW){
+  var out = [];
+  text.split("\n").forEach(function(p){
+    var words = p.split(/\s+/).filter(Boolean);
+    if (!words.length){ out.push(""); return; }
+    var line = words[0];
+    for (var i = 1; i < words.length; i++){
+      var t = line + " " + words[i];
+      if (c.measureText(t).width <= maxW) line = t; else { out.push(line); line = words[i]; }
+    }
+    out.push(line);
+  });
+  return out;
+}
+function fit(c, text, fam, wt, maxW, maxH, start, min, lh){
+  for (var s = start; s >= min; s -= 2){
+    c.font = font(wt, s, fam);
+    var lines = wrap(c, text, maxW);
+    if (blockH(lines.length, s, lh) <= maxH) return {size:s, lines:lines, lh:lh};
+  }
+  c.font = font(wt, min, fam);
+  return {size:min, lines:wrap(c, text, maxW), lh:lh};
+}
+function blockH(n, s, lh){ return n ? s*1.05 + (n-1)*s*lh + s*0.35 : 0; }
+function drawBlock(c, t, fam, wt, x, top, color){
+  c.font = font(wt, t.size, fam); c.fillStyle = color; c.textBaseline = "alphabetic";
+  t.lines.forEach(function(l, i){ c.fillText(l, x, top + t.size*1.05 + i*t.size*t.lh); });
+}
+
+function drawAvatar(c, b, d, cx, cy, r){
+  c.save(); c.beginPath(); c.arc(cx, cy, r, 0, Math.PI*2); c.closePath();
+  if (d.logo){ c.fillStyle = "#fff"; c.fill(); c.clip(); drawCover(c, d.logo, cx-r, cy-r, r*2, r*2, false); }
+  else {
+    c.fillStyle = b.grad ? accentFill(c, b, cx-r, cy-r, r*2, r*2) : b.brand; c.fill();
+    c.fillStyle = b.grad ? "#fff" : b.paper; c.textAlign = "center"; c.textBaseline = "middle";
+    c.font = font("800", Math.round(r*(b.mono.length > 1 ? 0.78 : 1.0)), "'Mukta'");
+    c.fillText(b.mono, cx, cy + r*0.06); c.textAlign = "left";
+  }
+  c.restore();
+}
+
+function drawChip(c, text, x, y, align, bg, fg){
+  if (!text) return;
+  c.font = font("700", 30, "'Mukta'"); c.textBaseline = "middle";
+  var w = c.measureText(text).width + 52, h = 62, left = align === "right" ? x - w : x;
+  rr(c, left, y, w, h, 31); c.fillStyle = bg; c.fill();
+  c.fillStyle = fg; c.fillText(text, left + 26, y + h/2 + 2);
+}
+
+function drawPill(c, b, d, x, y){
+  c.font = font("700", 30, "'Mukta'");
+  var tw = c.measureText(d.name).width, h = 72, w = 72 + tw + 30;
+  rr(c, x, y, w, h, 36); c.fillStyle = "rgba(0,0,0,0.42)"; c.fill();
+  drawAvatar(c, b, d, x + 36, y + 36, 28);
+  c.fillStyle = "#fff"; c.textBaseline = "middle"; c.fillText(d.name, x + 74, y + 38);
+}
+
+function iconShare(c, x, y, s, col){ // paper plane
+  c.save(); c.strokeStyle = col; c.lineWidth = 3.2; c.lineJoin = "round";
+  c.beginPath(); c.moveTo(x, y + s*0.45); c.lineTo(x + s, y); c.lineTo(x + s*0.62, y + s); c.lineTo(x + s*0.45, y + s*0.58); c.closePath(); c.stroke();
+  c.beginPath(); c.moveTo(x + s*0.45, y + s*0.58); c.lineTo(x + s, y); c.stroke(); c.restore();
+}
+function iconSave(c, x, y, s, col){ // bookmark
+  c.save(); c.strokeStyle = col; c.lineWidth = 3.2; c.lineJoin = "round";
+  c.beginPath(); c.moveTo(x + s*0.15, y); c.lineTo(x + s*0.85, y); c.lineTo(x + s*0.85, y + s); c.lineTo(x + s*0.5, y + s*0.72); c.lineTo(x + s*0.15, y + s); c.closePath(); c.stroke(); c.restore();
+}
+
+function safe(H){ return state.format === "story" ? {top:230, bottom:360} : {top:64, bottom:H === 1080 ? 64 : 84}; }
+function photoSrc(H){ return state.photo || placeholder(resolve(state.brand), H); }
+
+/* ---------- Layouts ---------- */
+var LAYOUTS = {
+  glass: function(c, H, b, d, text){
+    var src = photoSrc(H), sf = safe(H);
+    drawCover(c, src, 0, 0, W, H, true);
+    var vg = c.createLinearGradient(0, H*0.45, 0, H); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.38)");
+    c.fillStyle = vg; c.fillRect(0, 0, W, H);
+
+    var x = 64, w = W - 128, pad = 56, inner = w - pad*2;
+    var q = fit(c, text, b.qFont, b.qWeight, inner, H*0.30, 66, 40, 1.48);
+    var qh = blockH(q.lines.length, q.size, q.lh);
+    var cardH = pad + 96 + 34 + qh + 38 + 2 + 30 + 34 + pad - 14;
+    var y = Math.max(sf.top + 90, H - sf.bottom - 40 - cardH);
+
+    c.save(); c.shadowColor = "rgba(0,0,0,0.35)"; c.shadowBlur = 60; c.shadowOffsetY = 24;
+    rr(c, x, y, w, cardH, 44); c.fillStyle = hexA(b.paper, FILTER_OK ? 0.6 : 0.94); c.fill(); c.restore();
+    if (FILTER_OK){
+      c.save(); rr(c, x, y, w, cardH, 44); c.clip(); c.filter = "blur(26px) saturate(1.25)";
+      drawCover(c, src, 0, 0, W, H, true); c.filter = "none";
+      c.fillStyle = hexA(b.paper, 0.8); c.fillRect(x, y, w, cardH); c.restore();
+    }
+    rr(c, x + 1, y + 1, w - 2, cardH - 2, 43); c.strokeStyle = "rgba(255,255,255,0.7)"; c.lineWidth = 2; c.stroke();
+
+    var cx = x + pad, cy = y + pad;
+    drawAvatar(c, b, d, cx + 48, cy + 48, 48);
+    c.textBaseline = "alphabetic"; c.fillStyle = b.ink; c.font = font("700", 38, "'Mukta'"); c.fillText(d.name, cx + 120, cy + 42);
+    c.fillStyle = b.mutedInk; c.font = font("500", 28, "'Mukta'"); c.fillText(d.handle, cx + 120, cy + 82);
+    c.fillStyle = accentFill(c, b, x + w - pad - 64, cy + 30, 64, 10); rr(c, x + w - pad - 64, cy + 40, 64, 10, 5); c.fill();
+
+    var qTop = cy + 96 + 34;
+    drawBlock(c, q, b.qFont, b.qWeight, cx, qTop, b.ink);
+
+    var ly = qTop + qh + 38;
+    c.fillStyle = hexA(b.ink, 0.12); c.fillRect(cx, ly, inner, 2);
+    c.font = font("600", 26, "'Mukta'"); c.fillStyle = b.mutedInk; c.textBaseline = "middle";
+    var fy = ly + 2 + 30 + 17, maxF = inner - 120, ft = d.footer;
+    while (ft.length > 4 && c.measureText(ft).width > maxF) ft = ft.slice(0, -2);
+    if (ft !== d.footer) ft = ft.trim() + "…";
+    c.fillText(ft, cx, fy);
+    iconSave(c, x + w - pad - 30, fy - 16, 30, b.mutedInk);
+    iconShare(c, x + w - pad - 92, fy - 16, 32, b.mutedInk);
+
+    drawChip(c, state.chip, 64, sf.top, "left", b.paper, b.ink);
+  },
+
+  editorial: function(c, H, b, d, text){
+    var src = photoSrc(H), sf = safe(H);
+    drawCover(c, src, 0, 0, W, H, true);
+    var tg = c.createLinearGradient(0, 0, 0, H*0.22); tg.addColorStop(0, "rgba(0,0,0,0.5)"); tg.addColorStop(1, "rgba(0,0,0,0)");
+    c.fillStyle = tg; c.fillRect(0, 0, W, H*0.22);
+    var bg = c.createLinearGradient(0, H*0.28, 0, H); bg.addColorStop(0, hexA(b.dark, 0)); bg.addColorStop(0.55, hexA(b.dark, 0.78)); bg.addColorStop(1, hexA(b.dark, 0.97));
+    c.fillStyle = bg; c.fillRect(0, 0, W, H);
+
+    var x = 80, inner = W - 160;
+    drawAvatar(c, b, d, x + 34, sf.top + 34, 34);
+    c.fillStyle = "#fff"; c.font = font("700", 32, "'Mukta'"); c.textBaseline = "middle"; c.fillText(d.name, x + 84, sf.top + 36);
+    drawChip(c, state.chip, W - 80, sf.top + 3, "right", "rgba(255,255,255,0.92)", b.ink);
+
+    var yB = H - sf.bottom;
+    c.textBaseline = "alphabetic";
+    c.font = font("500", 26, "'Mukta'"); c.fillStyle = "rgba(255,255,255,0.72)"; c.fillText(d.footer, x, yB);
+    c.font = font("700", 30, "'Mukta'"); c.fillStyle = "#fff"; c.fillText(d.handle, x, yB - 44);
+    var ruleY = yB - 44 - 30 - 40;
+    c.fillStyle = accentFill(c, b, x, ruleY, 140, 8); rr(c, x, ruleY, 140, 8, 4); c.fill();
+
+    var q = fit(c, text, b.qFont, b.qWeight, inner, H*0.34, 88, 46, 1.42);
+    var qh = blockH(q.lines.length, q.size, q.lh), qTop = ruleY - 44 - qh;
+    drawBlock(c, q, b.qFont, b.qWeight, x, qTop, "#fff");
+    c.font = font("400", 170, "'Tiro Devanagari Marathi'"); c.fillStyle = accentFill(c, b, x, qTop - 120, 90, 90);
+    c.fillText("“", x - 8, qTop + 40);
+  },
+
+  split: function(c, H, b, d, text){
+    var src = photoSrc(H), sf = safe(H);
+    var ph = Math.round(H * (state.format === "story" ? 0.56 : 0.55));
+    c.fillStyle = b.dark; c.fillRect(0, 0, W, H);
+    c.save(); c.beginPath(); c.rect(0, 0, W, ph); c.clip(); drawCover(c, src, 0, 0, W, ph, true); c.restore();
+    c.fillStyle = accentFill(c, b, 0, ph, W, 10); c.fillRect(0, ph, W, 10);
+    c.beginPath(); c.arc(64 + 62, ph + 5, 70, 0, Math.PI*2); c.fillStyle = b.dark; c.fill();
+    drawAvatar(c, b, d, 64 + 62, ph + 5, 60);
+    drawChip(c, state.chip, 64, sf.top, "left", b.paper, b.ink);
+
+    var x = 72, inner = W - 144, yB = H - sf.bottom + 10;
+    c.textBaseline = "alphabetic";
+    c.font = font("600", 26, "'Mukta'"); c.fillStyle = b.grad ? "#B9A8FF" : b.accent; c.fillText(d.footer, x, yB);
+    c.font = font("700", 32, "'Mukta'"); c.fillStyle = b.paper; c.fillText(d.name, x, yB - 44);
+    var nw = c.measureText(d.name).width;
+    c.font = font("500", 28, "'Mukta'"); c.fillStyle = hexA(b.paper.length === 7 ? b.paper : "#FFFFFF", 0.62);
+    if (nw + 24 + c.measureText(d.handle).width < inner) c.fillText(d.handle, x + nw + 18, yB - 44);
+
+    var top = ph + 5 + 70 + 34, maxH = (yB - 44 - 32 - 40) - top;
+    var q = fit(c, text, b.qFont, b.qWeight, inner, maxH, 74, 40, 1.44);
+    var qh = blockH(q.lines.length, q.size, q.lh);
+    drawBlock(c, q, b.qFont, b.qWeight, x, top + Math.max(0, (maxH - qh) * 0.35), b.paper);
+  },
+
+  note: function(c, H, b, d, text){
+    var src = photoSrc(H), sf = safe(H);
+    drawCover(c, src, 0, 0, W, H, true);
+    var vg = c.createRadialGradient(W/2, H/2, H*0.25, W/2, H/2, H*0.8); vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,0.5)");
+    c.fillStyle = vg; c.fillRect(0, 0, W, H);
+    drawPill(c, b, d, 64, sf.top);
+    drawChip(c, state.chip, W - 64, sf.top + 5, "right", b.paper, b.ink);
+
+    var w = W - 200, pad = 64, inner = w - pad*2, fam = "'Kalam'";
+    var q = fit(c, text, fam, "700", inner, H*0.30, 66, 40, 1.36);
+    var qh = blockH(q.lines.length, q.size, q.lh);
+    var cardH = pad + 20 + qh + 44 + 40 + 40 + pad - 10;
+    var cy = Math.max(sf.top + 110 + cardH/2, H - sf.bottom - 60 - cardH/2);
+    c.save(); c.translate(W/2, cy); c.rotate(-0.038);
+    c.shadowColor = "rgba(0,0,0,0.4)"; c.shadowBlur = 50; c.shadowOffsetY = 22;
+    rr(c, -w/2, -cardH/2, w, cardH, 10); c.fillStyle = b.paper; c.fill(); c.shadowColor = "transparent";
+    c.fillStyle = hexA(b.ink, 0.06);
+    for (var ln = -cardH/2 + pad + 20 + q.size*1.05 + 12; ln < cardH/2 - pad; ln += q.size*q.lh) c.fillRect(-w/2 + pad, ln, inner, 2);
+    drawBlock(c, q, fam, "700", -w/2 + pad, -cardH/2 + pad + 20, b.ink);
+    var sy = -cardH/2 + pad + 20 + qh + 44 + 30;
+    c.font = font("400", 34, fam); c.fillStyle = b.grad ? b.brand : b.brand; c.textBaseline = "alphabetic";
+    c.fillText("— " + d.name, -w/2 + pad, sy);
+    c.font = font("500", 26, "'Mukta'"); c.fillStyle = b.mutedInk; c.fillText(d.handle, -w/2 + pad, sy + 42);
+    c.rotate(0.09); c.fillStyle = accentFill(c, b, -120, -cardH/2 - 26, 240, 56); c.globalAlpha = 0.85;
+    c.fillRect(-120, -cardH/2 - 30, 240, 58); c.globalAlpha = 1;
+    c.restore();
+  }
+};
+
+/* ---------- Render ---------- */
+function render(){
+  var H = FORMATS[state.format].h;
+  if (cv.height !== H){ cv.height = H; }
+  cv.width = W;
+  var b = resolve(state.brand), d = state.data[state.brand], text = (state.text[state.brand] || "").trim() || " ";
+  ctx.clearRect(0, 0, W, H); ctx.textAlign = "left";
+  LAYOUTS[state.style](ctx, H, b, d, text);
+}
+
+/* ---------- UI ---------- */
+function $(id){ return document.getElementById(id); }
+function seg(el, items, key, onPick){
+  el.innerHTML = "";
+  items.forEach(function(it){
+    var bt = document.createElement("button"); bt.type = "button";
+    if (it[2]){ var s = document.createElement("span"); s.className = "sw"; s.style.background = it[2]; bt.appendChild(s); }
+    bt.appendChild(document.createTextNode(it[1]));
+    bt.setAttribute("aria-pressed", String(state[key] === it[0]));
+    bt.addEventListener("click", function(){ state[key] = it[0]; onPick && onPick(); syncUI(); render(); save(); });
+    el.appendChild(bt);
+  });
+}
+function syncUI(){
+  seg($("brandSeg"), Object.keys(BRANDS).map(function(k){ return [k, BRANDS[k].tab, BRANDS[k].swatch]; }), "brand");
+  seg($("styleSeg"), STYLES, "style");
+  seg($("formatSeg"), Object.keys(FORMATS).map(function(k){ return [k, FORMATS[k].label]; }), "format");
+  $("sizeHint").textContent = FORMATS[state.format].hint;
+  var d = state.data[state.brand];
+  $("lineIn").value = state.text[state.brand];
+  $("nameIn").value = d.name; $("handleIn").value = d.handle; $("footerIn").value = d.footer; $("monoIn").value = d.mono;
+  var isCustom = !!BRANDS[state.brand].custom;
+  $("colorRow").hidden = !isCustom;
+  $("brandColorIn").value = d.brandColor; $("accentColorIn").value = d.accentColor;
+  if (isCustom) $("brandDetails").open = true;
+  $("logoClear").hidden = !d.logo;
+  var bank = $("bank"); bank.innerHTML = "";
+  BRANDS[state.brand].lines.forEach(function(l){ bank.appendChild(lineChip(l)); });
+}
+function lineChip(l){
+  var bt = document.createElement("button"); bt.type = "button"; bt.textContent = l;
+  bt.addEventListener("click", function(){ state.text[state.brand] = l; $("lineIn").value = l; render(); save(); });
+  return bt;
+}
+
+$("lineIn").addEventListener("input", function(e){ state.text[state.brand] = e.target.value; render(); save(); });
+$("chipIn").addEventListener("input", function(e){ state.chip = e.target.value.trim(); render(); });
+["name","handle","footer","mono"].forEach(function(f){
+  $(f + "In").addEventListener("input", function(e){ state.data[state.brand][f] = e.target.value; render(); save(); });
+});
+[["brandColorIn","brandColor"],["accentColorIn","accentColor"]].forEach(function(p){
+  $(p[0]).addEventListener("input", function(e){ state.data[state.brand][p[1]] = e.target.value; render(); save(); });
+});
+$("zoomIn").addEventListener("input", function(e){ state.zoom = e.target.value/100; render(); });
+$("posXIn").addEventListener("input", function(e){ state.posX = +e.target.value; render(); });
+$("posYIn").addEventListener("input", function(e){ state.posY = +e.target.value; render(); });
+[["photoBtn","photoIn"]].forEach(function(p){ $(p[0]).addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " "){ e.preventDefault(); $(p[1]).click(); } }); });
+
+function readImage(file, cb){
+  var url = URL.createObjectURL(file), im = new Image();
+  im.onload = function(){ cb(im); }; im.onerror = function(){ status("That file couldn't be opened. Try a JPG or PNG."); };
+  im.src = url;
+}
+$("photoIn").addEventListener("change", function(e){
+  var f = e.target.files && e.target.files[0]; if (!f) return;
+  readImage(f, function(im){ state.photo = im; state.zoom = 1; state.posX = 50; state.posY = 50; $("zoomIn").value = 100; $("posXIn").value = 50; $("posYIn").value = 50; $("photoClear").hidden = false; render(); });
+  e.target.value = "";
+});
+$("photoClear").addEventListener("click", function(){ state.photo = null; $("photoClear").hidden = true; render(); });
+$("logoIn").addEventListener("change", function(e){
+  var f = e.target.files && e.target.files[0]; if (!f) return; var key = state.brand;
+  readImage(f, function(im){
+    var c = document.createElement("canvas"); c.width = c.height = 256; var x = c.getContext("2d");
+    x.fillStyle = "#fff"; x.fillRect(0, 0, 256, 256); drawCover(x, im, 0, 0, 256, 256, false);
+    var url = c.toDataURL("image/png"); var l = new Image();
+    l.onload = function(){ state.data[key].logo = l; state.data[key].logoUrl = url; syncUI(); render(); save(); }; l.src = url;
+  });
+  e.target.value = "";
+});
+$("logoClear").addEventListener("click", function(){ var d = state.data[state.brand]; d.logo = null; d.logoUrl = null; syncUI(); render(); save(); });
+$("resetBrand").addEventListener("click", function(){
+  var b = BRANDS[state.brand]; state.data[state.brand] = {name:b.name, handle:b.handle, footer:b.footer, mono:b.mono, brandColor:b.brand, accentColor:b.accent, logo:null, logoUrl:null};
+  syncUI(); render(); save();
+});
+
+function status(t){ $("status").textContent = t; }
+
+/* ---------- Download & share ---------- */
+function stamp(){ var n = new Date(); function p(v){ return String(v).padStart(2, "0"); } return n.getFullYear() + p(n.getMonth()+1) + p(n.getDate()) + "-" + p(n.getHours()) + p(n.getMinutes()); }
+function fileName(){ var slug = (state.data[state.brand].name || state.brand).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "post"; return slug + "-" + state.style + "-" + state.format + "-" + stamp() + ".png"; }
+function makeBlob(){ render(); return new Promise(function(res){ cv.toBlob(function(b){ res(b); }, "image/png"); }); }
+
+$("saveBtn").addEventListener("click", function(){
+  status("Preparing…");
+  makeBlob().then(function(blob){
+    if (!blob){ status("Couldn't create the image. Try a smaller photo."); return; }
+    var name = fileName(), url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    status("Downloaded " + name);
+  });
+});
+
+var canShareFiles = false;
+try { canShareFiles = !!(navigator.canShare && navigator.share && navigator.canShare({files:[new File([new Blob(["x"], {type:"image/png"})], "t.png", {type:"image/png"})]})); } catch(e){}
+if (canShareFiles) $("shareBtn").hidden = false;
+$("shareBtn").addEventListener("click", function(){
+  makeBlob().then(function(blob){
+    if (!blob) return;
+    var file = new File([blob], fileName(), {type:"image/png"});
+    return navigator.share({files:[file]}).then(function(){ status("Shared."); });
+  }).catch(function(err){
+    if (err && err.name === "AbortError") status(""); else status("Sharing didn't work here. Use Download PNG instead.");
+  });
+});
+
+/* ---------- Boot ---------- */
+syncUI(); render();
+var fontLoads = ["400 60px 'Tiro Devanagari Marathi'", "700 60px Martel", "800 60px Mukta", "700 60px Mukta", "600 60px Mukta", "500 60px Mukta", "700 60px Kalam", "400 60px Kalam"];
+if (document.fonts && document.fonts.load){
+  Promise.all(fontLoads.map(function(f){ return document.fonts.load(f, "अपूर्ण चहा Business").catch(function(){}); }))
+    .then(function(){ render(); });
+  document.fonts.ready.then(render);
+}
+})();
+</script>
+</body>
+</html>
